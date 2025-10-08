@@ -62,7 +62,14 @@ find_package(Threads REQUIRED)
 target_link_libraries(${TESTNAME} PRIVATE Threads::Threads)
 endif()
 
-target_link_libraries(${TESTNAME} PRIVATE ${PROJECT_NAME} ssl crypto)
+if (USE_INCLUDED_SSL)
+	target_include_directories(${TESTNAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../Libraries/libressl/include)
+	target_link_libraries(${TESTNAME} PRIVATE ${PROJECT_NAME} ssl crypto)
+else()
+	find_package(OpenSSL REQUIRED)
+	target_include_directories(${TESTNAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+	target_link_libraries(${TESTNAME} PRIVATE ${PROJECT_NAME} ${OPENSSL_LIBRARIES})
+endif()
 
 if (WIN32)
 target_link_libraries(${TESTNAME} PRIVATE ws2_32)
@@ -71,7 +78,15 @@ endif()
 
 set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/")
 
-add_test(${TESTNAME} ${CMAKE_CURRENT_BINARY_DIR}/${TESTNAME})
+# Enable fine-grained GoogleTest discovery instead of one monolithic test entry
+include(GoogleTest)
+gtest_discover_tests(
+	${TESTNAME}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	DISCOVERY_TIMEOUT 60
+	# Avoid re-running discovery on every build unless sources change
+	PROPERTIES VS_TEST_CATEGORY "CPP_Bindings"
+)
 
 find_program(VALGRIND "valgrind")
 if(VALGRIND)
