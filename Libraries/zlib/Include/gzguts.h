@@ -38,6 +38,10 @@
 #  include <io.h>
 #endif
 
+#if !defined(_WIN32)
+#  include <unistd.h>
+#endif
+
 #if defined(_WIN32)
 #  define WIDECHAR
 #endif
