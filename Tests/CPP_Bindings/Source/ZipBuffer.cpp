@@ -356,6 +356,7 @@ namespace Lib3MF
                 stream.next_out = Z_NULL;
                 stream.avail_out = 0;
 
+                // Use -MAX_WBITS to indicate raw deflate stream (no zlib headers/footers).
                 int const initResult = inflateInit2(&stream, -MAX_WBITS);
                 if(initResult != Z_OK)
                 {
