@@ -170,9 +170,12 @@ namespace Lib3MF
         beamLatticeNode->SetAccurateRange(3.5);
 
         // Link inputs
-        function->AddLink(posInput, beamLatticeNode->GetInputPos());
-        function->AddLink(resourceIdNode->GetOutputValue(), 
-                         beamLatticeNode->GetInputBeamLattice());
+        auto blInputPos = beamLatticeNode->GetInputPos();
+        function->AddLink(posInput, blInputPos);
+
+        auto resOutput = resourceIdNode->GetOutputValue();
+        auto blInputBeamLattice = beamLatticeNode->GetInputBeamLattice();
+        function->AddLink(resOutput, blInputBeamLattice);
 
         // Link output
         auto output = function->AddOutput("distance", "distance field", 
@@ -186,22 +189,20 @@ namespace Lib3MF
         levelSet->SetFunction(function.get());
 
         // Write to file
-        writer3MF->WriteToFile(OutFolder + "BeamLatticeNode.3mf");
+        writer3MF->WriteToFile(ImplicitNodes::OutFolder + "BeamLatticeNode.3mf");
 
         // Read and compare
         PModel ioModel = wrapper->CreateModel();
         PReader ioReader = ioModel->QueryReader("3mf");
-        ioReader->ReadFromFile(OutFolder + "BeamLatticeNode.3mf");
-
+        ioReader->ReadFromFile(ImplicitNodes::OutFolder + "BeamLatticeNode.3mf");
         auto functionIter = ioModel->GetFunctions();
         ASSERT_EQ(functionIter->Count(), 1u);
         ASSERT_TRUE(functionIter->MoveNext());
 
         auto readFunction = std::dynamic_pointer_cast<CImplicitFunction>(
             functionIter->GetCurrentFunction());
-        ASSERT_TRUE(readFunction);
+        ASSERT_NE(readFunction, nullptr);
 
-        // Compare functions
         helper::compareFunctions(model, function, ioModel, readFunction);
 
         // Verify BeamLatticeNode specifically
@@ -214,7 +215,7 @@ namespace Lib3MF
             {
                 foundBeamLattice = true;
                 auto blNode = std::dynamic_pointer_cast<CBeamLatticeNode>(node);
-                ASSERT_TRUE(blNode);
+                ASSERT_NE(blNode, nullptr);
                 EXPECT_DOUBLE_EQ(blNode->GetAccurateRange(), 3.5);
             }
         }
@@ -251,11 +252,11 @@ namespace Lib3MF
         levelSet->SetFunction(function.get());
 
         // Write and read
-        writer3MF->WriteToFile(OutFolder + "BeamLatticeZero.3mf");
+        writer3MF->WriteToFile(ImplicitNodes::OutFolder + "BeamLatticeZero.3mf");
 
         PModel ioModel = wrapper->CreateModel();
         PReader ioReader = ioModel->QueryReader("3mf");
-        ioReader->ReadFromFile(OutFolder + "BeamLatticeZero.3mf");
+        ioReader->ReadFromFile(ImplicitNodes::OutFolder + "BeamLatticeZero.3mf");
 
         auto functionIter = ioModel->GetFunctions();
         ASSERT_TRUE(functionIter->MoveNext());
@@ -269,6 +270,7 @@ namespace Lib3MF
             if (node->GetNodeType() == Lib3MF::eImplicitNodeType::BeamLattice)
             {
                 auto blNode = std::dynamic_pointer_cast<CBeamLatticeNode>(node);
+                ASSERT_NE(blNode, nullptr);
                 EXPECT_DOUBLE_EQ(blNode->GetAccurateRange(), 0.0);
             }
         }
@@ -396,25 +398,27 @@ namespace Lib3MF
         levelSet->SetFunction(function.get());
 
         // Write to file
-        writer3MF->WriteToFile(OutFolder + "FunctionGradientNode.3mf");
+        writer3MF->WriteToFile(ImplicitNodes::OutFolder + "FunctionGradientNode.3mf");
 
         // Read and compare
         PModel ioModel = wrapper->CreateModel();
         PReader ioReader = ioModel->QueryReader("3mf");
-        ioReader->ReadFromFile(OutFolder + "FunctionGradientNode.3mf");
+        ioReader->ReadFromFile(ImplicitNodes::OutFolder + "FunctionGradientNode.3mf");
 
         auto functionIter = ioModel->GetFunctions();
         ASSERT_EQ(functionIter->Count(), 2u);
 
-        // Skip the referenced function
-        ASSERT_TRUE(functionIter->MoveNext());
-        ASSERT_TRUE(functionIter->MoveNext());
+        EXPECT_TRUE(functionIter->MoveNext());
+        helper::compareFunctions(model, referencedFunction, ioModel,
+                                 functionIter->GetCurrentFunction());
 
+        EXPECT_TRUE(functionIter->MoveNext());
         auto readFunction = std::dynamic_pointer_cast<CImplicitFunction>(
             functionIter->GetCurrentFunction());
-        ASSERT_TRUE(readFunction);
+        ASSERT_NE(readFunction, nullptr);
 
         helper::compareFunctions(model, function, ioModel, readFunction);
+        EXPECT_FALSE(functionIter->MoveNext());
 
         // Verify FunctionGradientNode specifically
         auto nodes = readFunction->GetNodes();
@@ -426,7 +430,7 @@ namespace Lib3MF
             {
                 foundFunctionGradient = true;
                 auto fgNode = std::dynamic_pointer_cast<CFunctionGradientNode>(node);
-                ASSERT_TRUE(fgNode);
+                ASSERT_NE(fgNode, nullptr);
                 EXPECT_EQ(fgNode->GetScalarOutputName(), "magnitude");
                 EXPECT_EQ(fgNode->GetVectorInputName(), "normalizedgradient");
             }
@@ -588,25 +592,27 @@ namespace Lib3MF
         levelSet->SetFunction(function.get());
 
         // Write to file
-        writer3MF->WriteToFile(OutFolder + "NormalizeDistanceNode.3mf");
+        writer3MF->WriteToFile(ImplicitNodes::OutFolder + "NormalizeDistanceNode.3mf");
 
         // Read and compare
         PModel ioModel = wrapper->CreateModel();
         PReader ioReader = ioModel->QueryReader("3mf");
-        ioReader->ReadFromFile(OutFolder + "NormalizeDistanceNode.3mf");
+        ioReader->ReadFromFile(ImplicitNodes::OutFolder + "NormalizeDistanceNode.3mf");
 
         auto functionIter = ioModel->GetFunctions();
         ASSERT_EQ(functionIter->Count(), 2u);
 
-        // Skip the referenced function
-        ASSERT_TRUE(functionIter->MoveNext());
-        ASSERT_TRUE(functionIter->MoveNext());
+        EXPECT_TRUE(functionIter->MoveNext());
+        helper::compareFunctions(model, referencedFunction, ioModel,
+                                 functionIter->GetCurrentFunction());
 
+        EXPECT_TRUE(functionIter->MoveNext());
         auto readFunction = std::dynamic_pointer_cast<CImplicitFunction>(
             functionIter->GetCurrentFunction());
-        ASSERT_TRUE(readFunction);
+        ASSERT_NE(readFunction, nullptr);
 
         helper::compareFunctions(model, function, ioModel, readFunction);
+        EXPECT_FALSE(functionIter->MoveNext());
 
         // Verify NormalizeDistanceNode specifically
         auto nodes = readFunction->GetNodes();
@@ -618,7 +624,7 @@ namespace Lib3MF
             {
                 foundNormalizeDistance = true;
                 auto ndNode = std::dynamic_pointer_cast<CNormalizeDistanceNode>(node);
-                ASSERT_TRUE(ndNode);
+                ASSERT_NE(ndNode, nullptr);
                 EXPECT_EQ(ndNode->GetScalarOutputName(), "result");
                 EXPECT_EQ(ndNode->GetVectorInputName(), "gradient");
             }
@@ -698,26 +704,27 @@ namespace Lib3MF
         levelSet->SetFunction(function.get());
 
         // Write to file
-        writer3MF->WriteToFile(OutFolder + "CombinedNewNodes.3mf");
+        writer3MF->WriteToFile(ImplicitNodes::OutFolder + "CombinedNewNodes.3mf");
 
         // Read and verify
         PModel ioModel = wrapper->CreateModel();
         PReader ioReader = ioModel->QueryReader("3mf");
-        ioReader->ReadFromFile(OutFolder + "CombinedNewNodes.3mf");
+        ioReader->ReadFromFile(ImplicitNodes::OutFolder + "CombinedNewNodes.3mf");
 
         auto functionIter = ioModel->GetFunctions();
-        // Should have 2 functions: reference and main
         ASSERT_EQ(functionIter->Count(), 2u);
 
-        // Skip to main function
-        ASSERT_TRUE(functionIter->MoveNext());
-        ASSERT_TRUE(functionIter->MoveNext());
+        EXPECT_TRUE(functionIter->MoveNext());
+        helper::compareFunctions(model, refFunc, ioModel,
+                                 functionIter->GetCurrentFunction());
 
+        EXPECT_TRUE(functionIter->MoveNext());
         auto readFunction = std::dynamic_pointer_cast<CImplicitFunction>(
             functionIter->GetCurrentFunction());
-        ASSERT_TRUE(readFunction);
+        ASSERT_NE(readFunction, nullptr);
 
         helper::compareFunctions(model, function, ioModel, readFunction);
+        EXPECT_FALSE(functionIter->MoveNext());
 
         // Verify all three node types are present
         auto nodes = readFunction->GetNodes();
@@ -734,12 +741,14 @@ namespace Lib3MF
             {
                 foundBeamLattice = true;
                 auto blNode = std::dynamic_pointer_cast<CBeamLatticeNode>(node);
+                ASSERT_NE(blNode, nullptr);
                 EXPECT_DOUBLE_EQ(blNode->GetAccurateRange(), 2.5);
             }
             else if (nodeType == Lib3MF::eImplicitNodeType::FunctionGradient)
             {
                 foundFunctionGradient = true;
                 auto fgNode = std::dynamic_pointer_cast<CFunctionGradientNode>(node);
+                ASSERT_NE(fgNode, nullptr);
                 EXPECT_EQ(fgNode->GetScalarOutputName(), "magnitude");
                 EXPECT_EQ(fgNode->GetVectorInputName(), "normalizedgradient");
             }
@@ -747,6 +756,7 @@ namespace Lib3MF
             {
                 foundNormalizeDistance = true;
                 auto ndNode = std::dynamic_pointer_cast<CNormalizeDistanceNode>(node);
+                ASSERT_NE(ndNode, nullptr);
                 EXPECT_EQ(ndNode->GetScalarOutputName(), "result");
                 EXPECT_EQ(ndNode->GetVectorInputName(), "gradient");
             }
