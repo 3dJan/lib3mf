@@ -232,6 +232,52 @@ namespace NMR
         return model->findResource(model->currentPath(), m_modelResourceID);
     }
 
+    void CModelImplicitNode::setAccurateRange(double accurateRange)
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::BeamLattice)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        m_accurateRange = std::max(0.0, accurateRange);  // Clamp to >= 0.0 per schema
+    }
+
+    double CModelImplicitNode::getAccurateRange() const
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::BeamLattice)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        return m_accurateRange;
+    }
+
+    void CModelImplicitNode::setScalarOutputName(const std::string& name)
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::FunctionGradient &&
+            m_type != Lib3MF::eImplicitNodeType::NormalizeDistance)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        m_scalarOutputName = name;
+    }
+
+    std::string CModelImplicitNode::getScalarOutputName() const
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::FunctionGradient &&
+            m_type != Lib3MF::eImplicitNodeType::NormalizeDistance)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        return m_scalarOutputName;
+    }
+
+    void CModelImplicitNode::setVectorInputName(const std::string& name)
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::FunctionGradient &&
+            m_type != Lib3MF::eImplicitNodeType::NormalizeDistance)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        m_vectorInputName = name;
+    }
+
+    std::string CModelImplicitNode::getVectorInputName() const
+    {
+        if (m_type != Lib3MF::eImplicitNodeType::FunctionGradient &&
+            m_type != Lib3MF::eImplicitNodeType::NormalizeDistance)
+            throw CNMRException(NMR_ERROR_INVALIDPARAM);
+        return m_vectorInputName;
+    }
+
     bool CModelImplicitNode::arePortsValid() const
     {
         return m_parent->getNodeTypes().arePortsValidForNode(*this);
