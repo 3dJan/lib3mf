@@ -1,4 +1,4 @@
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 env:
   # Set this to "on" to enable integration tests and "off" to skip integration tests
   RUN_INTEGRATION_TESTS: "on"
